@@ -29,9 +29,9 @@ serve(async (req) => {
     }
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-    const serpApiKey = Deno.env.get('SERP_API_KEY');
+    const cohereApiKey = Deno.env.get('COHERE_API_KEY');
     console.log('Gemini API Key available:', !!geminiApiKey);
-    console.log('SERP API Key available:', !!serpApiKey);
+    console.log('Cohere API Key available:', !!cohereApiKey);
     
     if (!geminiApiKey) {
       console.error('GEMINI_API_KEY not found in environment variables');
@@ -44,10 +44,10 @@ serve(async (req) => {
       );
     }
 
-    if (!serpApiKey) {
-      console.error('SERP_API_KEY not found in environment variables');
+    if (!cohereApiKey) {
+      console.error('COHERE_API_KEY not found in environment variables');
       return new Response(
-        JSON.stringify({ error: 'SERP API key not configured' }), 
+        JSON.stringify({ error: 'Cohere API key not configured' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -55,15 +55,26 @@ serve(async (req) => {
       );
     }
 
-    console.log('Starting SERP API search...');
+    console.log('Starting Cohere search...');
     
-    // First, get real-time data from SERP API
-    const serpResponse = await fetch(
-      `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query + ' football soccer')}&api_key=${serpApiKey}&num=5`
+    // First, get real-time data from Cohere API
+    const cohereResponse = await fetch(
+      'https://api.cohere.ai/v1/web-search',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${cohereApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: query + ' football soccer',
+          max_results: 5
+        })
+      }
     );
 
-    if (!serpResponse.ok) {
-      console.error('SERP API error:', serpResponse.status);
+    if (!cohereResponse.ok) {
+      console.error('Cohere API error:', cohereResponse.status);
       return new Response(
         JSON.stringify({ error: 'Failed to get search results' }), 
         { 
@@ -73,14 +84,14 @@ serve(async (req) => {
       );
     }
 
-    const serpData = await serpResponse.json();
-    console.log('SERP data received, results count:', serpData.organic_results?.length || 0);
+    const cohereData = await cohereResponse.json();
+    console.log('Cohere data received, results count:', cohereData.search_results?.length || 0);
     
     // Extract search results for Gemini processing
-    const searchResults = serpData.organic_results?.slice(0, 5).map((result: any) => ({
+    const searchResults = cohereData.search_results?.map((result: any) => ({
       title: result.title,
       snippet: result.snippet,
-      link: result.link
+      link: result.url
     })) || [];
 
     console.log('Starting Gemini processing...');
