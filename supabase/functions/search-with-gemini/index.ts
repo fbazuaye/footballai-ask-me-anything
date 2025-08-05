@@ -28,56 +28,26 @@ serve(async (req) => {
       );
     }
 
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    const serperApiKey = Deno.env.get('SERP_API_KEY');
+    console.log('Starting RAG search with Flowise...');
     
-    console.log('OpenAI API Key available:', !!openaiApiKey);
-    console.log('Serper API Key available:', !!serperApiKey);
-    
-    if (!openaiApiKey) {
-      console.error('OPENAI_API_KEY not found in environment variables');
-      return new Response(
-        JSON.stringify({ error: 'OpenAI API key not configured' }), 
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    if (!serperApiKey) {
-      console.error('SERP_API_KEY not found in environment variables');
-      return new Response(
-        JSON.stringify({ error: 'Serper API key not configured' }), 
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    console.log('Starting web search with Serper...');
-    
-    // Use Serper API for web search
-    const serperResponse = await fetch('https://google.serper.dev/search', {
+    // Use Flowise RAG endpoint for document-based search
+    const flowiseResponse = await fetch('https://srv938896.hstgr.cloud/api/v1/prediction/d4c3b59e-4822-435b-a3c8-3f8da4261208', {
       method: 'POST',
       headers: {
-        'X-API-KEY': serperApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        q: query,
-        num: 5
+        question: query
       })
     });
 
-    console.log('Serper response status:', serperResponse.status);
+    console.log('Flowise response status:', flowiseResponse.status);
 
-    if (!serperResponse.ok) {
-      const errorText = await serperResponse.text();
-      console.error('Serper API error:', errorText);
+    if (!flowiseResponse.ok) {
+      const errorText = await flowiseResponse.text();
+      console.error('Flowise API error:', errorText);
       return new Response(
-        JSON.stringify({ error: 'Failed to get search results from Serper' }), 
+        JSON.stringify({ error: 'Failed to get response from Flowise RAG' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -85,81 +55,21 @@ serve(async (req) => {
       );
     }
 
-    const serperData = await serperResponse.json();
-    console.log('Serper data received:', !!serperData.organic);
+    const flowiseData = await flowiseResponse.json();
+    console.log('Flowise data received:', !!flowiseData);
 
-    // Extract search results for OpenAI processing
-    const searchResults = serperData.organic || [];
-    const sources = searchResults.map((result: any) => ({
-      title: result.title,
-      url: result.link,
-      snippet: result.snippet
-    }));
-
-    // Prepare content for OpenAI analysis
-    const searchContext = searchResults
-      .map((result: any) => `Title: ${result.title}\nURL: ${result.link}\nSnippet: ${result.snippet}`)
-      .join('\n\n');
-
-    console.log('Starting OpenAI processing with search context...');
+    // Extract the answer and sources from Flowise response
+    const summary = flowiseData.text || flowiseData.answer || flowiseData.result || 'No answer found';
     
-    // Use OpenAI to analyze search results and provide intelligent response
-    const openaiResponse = await fetch(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4.1-2025-04-14',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a knowledgeable AI assistant. Analyze the provided search results and create a comprehensive, well-structured response to the user\'s query. Use the search results as your primary source of information, but also add your own insights and analysis. Be informative, accurate, and cite relevant sources when appropriate.'
-            },
-            {
-              role: 'user',
-              content: `Query: ${query}\n\nSearch Results:\n${searchContext}\n\nPlease provide a comprehensive answer based on these search results.`
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 1000
-        })
-      }
-    );
+    // Create mock sources since Flowise might not provide structured sources
+    // You may need to adjust this based on actual Flowise response structure
+    const sources = flowiseData.sourceDocuments || flowiseData.sources || [{
+      title: 'Document-based Answer',
+      url: '#',
+      snippet: 'Answer retrieved from document knowledge base'
+    }];
 
-    console.log('OpenAI response status:', openaiResponse.status);
-
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
-      console.error('OpenAI API error:', errorText);
-      return new Response(
-        JSON.stringify({ error: 'Failed to get response from OpenAI' }), 
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    const openaiData = await openaiResponse.json();
-    console.log('OpenAI data received:', !!openaiData.choices);
-    
-    if (!openaiData.choices || openaiData.choices.length === 0) {
-      console.error('No response from OpenAI');
-      return new Response(
-        JSON.stringify({ error: 'No response from AI' }), 
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    const summary = openaiData.choices[0].message.content;
-    console.log('Summary generated, length:', summary?.length);
+    console.log('RAG response generated, length:', summary?.length);
 
     const response = {
       summary,
@@ -167,7 +77,7 @@ serve(async (req) => {
       query
     };
 
-    console.log('Search completed successfully for query:', query);
+    console.log('RAG search completed successfully for query:', query);
 
     return new Response(
       JSON.stringify(response),
