@@ -25,13 +25,13 @@ serve(async (req) => {
       );
     }
 
-    const serpApiKey = Deno.env.get('SERP_API_KEY');
+    const apiFootballKey = Deno.env.get('API_FOOTBALL_KEY');
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     
-    if (!serpApiKey) {
-      console.error('SERP_API_KEY not found in environment variables');
+    if (!apiFootballKey) {
+      console.error('API_FOOTBALL_KEY not found in environment variables');
       return new Response(
-        JSON.stringify({ error: 'SerpAPI key not configured' }), 
+        JSON.stringify({ error: 'API Football key not configured' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -50,22 +50,44 @@ serve(async (req) => {
       );
     }
 
-    // Call SerpAPI for Google search results
-    const serpResponse = await fetch(
-      `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query + ' football')}&api_key=${serpApiKey}&num=10`,
+    // Determine API Football endpoint based on query
+    let apiUrl = 'https://v3.football.api-sports.io/';
+    let endpoint = '';
+    
+    // Parse query to determine best endpoint
+    const queryLower = query.toLowerCase();
+    if (queryLower.includes('fixture') || queryLower.includes('match') || queryLower.includes('game')) {
+      endpoint = 'fixtures';
+    } else if (queryLower.includes('team') || queryLower.includes('club')) {
+      endpoint = 'teams';
+    } else if (queryLower.includes('player')) {
+      endpoint = 'players';
+    } else if (queryLower.includes('league') || queryLower.includes('competition')) {
+      endpoint = 'leagues';
+    } else if (queryLower.includes('standing') || queryLower.includes('table')) {
+      endpoint = 'standings';
+    } else {
+      // Default to fixtures for general queries
+      endpoint = 'fixtures';
+    }
+
+    // Call API Football
+    const footballResponse = await fetch(
+      `${apiUrl}${endpoint}?search=${encodeURIComponent(query)}`,
       {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
+          'X-RapidAPI-Key': apiFootballKey,
+          'X-RapidAPI-Host': 'v3.football.api-sports.io'
         }
       }
     );
 
-    if (!serpResponse.ok) {
-      const errorText = await serpResponse.text();
-      console.error('SerpAPI error:', errorText);
+    if (!footballResponse.ok) {
+      const errorText = await footballResponse.text();
+      console.error('API Football error:', errorText);
       return new Response(
-        JSON.stringify({ error: 'Failed to get search results' }), 
+        JSON.stringify({ error: 'Failed to get football data' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -73,11 +95,11 @@ serve(async (req) => {
       );
     }
 
-    const serpData = await serpResponse.json();
+    const footballData = await footballResponse.json();
     
-    if (!serpData.organic_results || serpData.organic_results.length === 0) {
+    if (!footballData.response || footballData.response.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'No search results found' }), 
+        JSON.stringify({ error: 'No football data found' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -85,12 +107,28 @@ serve(async (req) => {
       );
     }
 
-    // Extract and format the search results
-    const sources = serpData.organic_results.slice(0, 5).map((result: any) => ({
-      title: result.title || 'No title',
-      url: result.link || '#',
-      snippet: result.snippet || 'No description available'
-    }));
+    // Format API Football results for sources
+    const sources = footballData.response.slice(0, 5).map((result: any, index: number) => {
+      let title = `Football Data ${index + 1}`;
+      let snippet = 'Football information';
+      
+      if (endpoint === 'fixtures') {
+        title = `${result.teams?.home?.name || 'Team'} vs ${result.teams?.away?.name || 'Team'}`;
+        snippet = `Date: ${result.fixture?.date || 'TBD'}, Status: ${result.fixture?.status?.long || 'Unknown'}`;
+      } else if (endpoint === 'teams') {
+        title = result.team?.name || 'Team';
+        snippet = `Founded: ${result.team?.founded || 'Unknown'}, Country: ${result.team?.country || 'Unknown'}`;
+      } else if (endpoint === 'players') {
+        title = result.player?.name || 'Player';
+        snippet = `Age: ${result.player?.age || 'Unknown'}, Position: ${result.statistics?.[0]?.games?.position || 'Unknown'}`;
+      }
+      
+      return {
+        title,
+        url: '#',
+        snippet
+      };
+    });
 
     // Prepare search results for Gemini processing
     const searchContext = sources.map((source, index) => 
@@ -110,7 +148,7 @@ serve(async (req) => {
             parts: [{
               text: `You are an intelligent football information assistant. A user asked: "${query}"
 
-Here are the search results from SerpAPI:
+Here are the football data results from API Football:
 ${searchContext}
 
 Please analyze these search results and provide:
