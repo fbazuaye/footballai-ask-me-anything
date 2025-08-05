@@ -25,20 +25,8 @@ serve(async (req) => {
       );
     }
 
-    const apiFootballKey = Deno.env.get('API_FOOTBALL_KEY');
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     
-    if (!apiFootballKey) {
-      console.error('API_FOOTBALL_KEY not found in environment variables');
-      return new Response(
-        JSON.stringify({ error: 'API Football key not configured' }), 
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
     if (!geminiApiKey) {
       console.error('GEMINI_API_KEY not found in environment variables');
       return new Response(
@@ -50,44 +38,55 @@ serve(async (req) => {
       );
     }
 
-    // Determine API Football endpoint based on query
-    let apiUrl = 'https://v3.football.api-sports.io/';
-    let endpoint = '';
-    
-    // Parse query to determine best endpoint
-    const queryLower = query.toLowerCase();
-    if (queryLower.includes('fixture') || queryLower.includes('match') || queryLower.includes('game')) {
-      endpoint = 'fixtures';
-    } else if (queryLower.includes('team') || queryLower.includes('club')) {
-      endpoint = 'teams';
-    } else if (queryLower.includes('player')) {
-      endpoint = 'players';
-    } else if (queryLower.includes('league') || queryLower.includes('competition')) {
-      endpoint = 'leagues';
-    } else if (queryLower.includes('standing') || queryLower.includes('table')) {
-      endpoint = 'standings';
-    } else {
-      // Default to fixtures for general queries
-      endpoint = 'fixtures';
-    }
-
-    // Call API Football
-    const footballResponse = await fetch(
-      `${apiUrl}${endpoint}?search=${encodeURIComponent(query)}`,
+    // Use Gemini to search and fetch football data
+    const dataGeminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`,
       {
-        method: 'GET',
+        method: 'POST',
         headers: {
-          'X-RapidAPI-Key': apiFootballKey,
-          'X-RapidAPI-Host': 'v3.football.api-sports.io'
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are a football data expert. The user asked: "${query}"
+
+Please provide detailed football information for this query. Return the information in this exact JSON format:
+{
+  "matches": [
+    {
+      "title": "Match title or event",
+      "snippet": "Key details like date, score, teams, etc.",
+      "details": "Additional relevant information"
+    }
+  ]
+}
+
+For specific queries like "Chelsea's home match results from 2022/2023", provide actual historical data with:
+- Match dates
+- Opponents
+- Scores
+- Competition (Premier League, Champions League, etc.)
+- Key details
+
+Be comprehensive and accurate. Return only the JSON response.`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.1,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 2000,
+          }
+        })
       }
     );
 
-    if (!footballResponse.ok) {
-      const errorText = await footballResponse.text();
-      console.error('API Football error:', errorText);
+    if (!dataGeminiResponse.ok) {
+      const errorText = await dataGeminiResponse.text();
+      console.error('Gemini data fetch error:', errorText);
       return new Response(
-        JSON.stringify({ error: 'Failed to get football data' }), 
+        JSON.stringify({ error: 'Failed to fetch football data' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -95,9 +94,9 @@ serve(async (req) => {
       );
     }
 
-    const footballData = await footballResponse.json();
+    const dataGeminiData = await dataGeminiResponse.json();
     
-    if (!footballData.response || footballData.response.length === 0) {
+    if (!dataGeminiData.candidates || dataGeminiData.candidates.length === 0) {
       return new Response(
         JSON.stringify({ error: 'No football data found' }), 
         { 
@@ -107,32 +106,34 @@ serve(async (req) => {
       );
     }
 
-    // Format API Football results for sources
-    const sources = footballData.response.slice(0, 5).map((result: any, index: number) => {
-      let title = `Football Data ${index + 1}`;
-      let snippet = 'Football information';
-      
-      if (endpoint === 'fixtures') {
-        title = `${result.teams?.home?.name || 'Team'} vs ${result.teams?.away?.name || 'Team'}`;
-        snippet = `Date: ${result.fixture?.date || 'TBD'}, Status: ${result.fixture?.status?.long || 'Unknown'}`;
-      } else if (endpoint === 'teams') {
-        title = result.team?.name || 'Team';
-        snippet = `Founded: ${result.team?.founded || 'Unknown'}, Country: ${result.team?.country || 'Unknown'}`;
-      } else if (endpoint === 'players') {
-        title = result.player?.name || 'Player';
-        snippet = `Age: ${result.player?.age || 'Unknown'}, Position: ${result.statistics?.[0]?.games?.position || 'Unknown'}`;
-      }
-      
-      return {
-        title,
-        url: '#',
-        snippet
-      };
-    });
+    // Parse Gemini response to extract football data
+    let footballData;
+    try {
+      const geminiText = dataGeminiData.candidates[0].content.parts[0].text;
+      // Remove markdown code blocks if present
+      const cleanedText = geminiText.replace(/```json\n?|\n?```/g, '').trim();
+      footballData = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error('Error parsing Gemini response:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to parse football data' }), 
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
-    // Prepare search results for Gemini processing
+    // Format results for sources
+    const sources = footballData.matches?.slice(0, 5).map((match: any, index: number) => ({
+      title: match.title || `Football Data ${index + 1}`,
+      url: '#',
+      snippet: match.snippet || 'Football information'
+    })) || [];
+
+    // Prepare search context for final Gemini processing
     const searchContext = sources.map((source, index) => 
-      `${index + 1}. ${source.title}\n${source.snippet}\nSource: ${source.url}`
+      `${index + 1}. ${source.title}\n${source.snippet}`
     ).join('\n\n');
 
     // Use Gemini to process and intelligently format the search results
@@ -148,7 +149,7 @@ serve(async (req) => {
             parts: [{
               text: `You are an intelligent football information assistant. A user asked: "${query}"
 
-Here are the football data results from API Football:
+Here are the football data results from Gemini:
 ${searchContext}
 
 Please analyze these search results and provide:
