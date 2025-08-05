@@ -29,9 +29,7 @@ serve(async (req) => {
     }
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    const cohereApiKey = Deno.env.get('COHERE_API_KEY');
     console.log('OpenAI API Key available:', !!openaiApiKey);
-    console.log('Cohere API Key available:', !!cohereApiKey);
     
     if (!openaiApiKey) {
       console.error('OPENAI_API_KEY not found in environment variables');
@@ -44,59 +42,9 @@ serve(async (req) => {
       );
     }
 
-    if (!cohereApiKey) {
-      console.error('COHERE_API_KEY not found in environment variables');
-      return new Response(
-        JSON.stringify({ error: 'Cohere API key not configured' }), 
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    console.log('Starting Cohere search...');
-    
-    // First, get real-time data from Cohere API
-    const cohereResponse = await fetch(
-      'https://api.cohere.ai/v1/web-search',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${cohereApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: query + ' football soccer',
-          max_results: 5
-        })
-      }
-    );
-
-    if (!cohereResponse.ok) {
-      console.error('Cohere API error:', cohereResponse.status);
-      return new Response(
-        JSON.stringify({ error: 'Failed to get search results' }), 
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    const cohereData = await cohereResponse.json();
-    console.log('Cohere data received, results count:', cohereData.search_results?.length || 0);
-    
-    // Extract search results for OpenAI processing
-    const searchResults = cohereData.search_results?.map((result: any) => ({
-      title: result.title,
-      snippet: result.snippet,
-      link: result.url
-    })) || [];
-
     console.log('Starting OpenAI processing...');
     
-    // Use OpenAI to process the real-time search results
+    // Use OpenAI to answer the query directly using its knowledge
     const openaiResponse = await fetch(
       'https://api.openai.com/v1/chat/completions',
       {
@@ -110,22 +58,11 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: 'You are a football expert. Provide comprehensive and intelligent analysis based on search results.'
+              content: 'You are a knowledgeable AI assistant. Provide comprehensive and helpful answers to user questions based on your knowledge. Be informative, accurate, and well-structured in your responses.'
             },
             {
               role: 'user',
-              content: `The user asked: "${query}"
-
-Based on these real-time search results:
-${searchResults.map(result => `Title: ${result.title}\nSnippet: ${result.snippet}`).join('\n\n')}
-
-Please provide a comprehensive and intelligent analysis that:
-- Synthesizes information from the search results
-- Provides accurate, up-to-date football information
-- Answers the user's question directly
-- Includes relevant details about matches, teams, players, or statistics
-
-Format your response as a clear, informative summary.`
+              content: query
             }
           ],
           temperature: 0.2,
@@ -165,12 +102,8 @@ Format your response as a clear, informative summary.`
     const summary = openaiData.choices[0].message.content;
     console.log('Summary generated, length:', summary?.length);
 
-    // Use the actual search results as sources
-    const sources = searchResults.map(result => ({
-      title: result.title,
-      url: result.link,
-      snippet: result.snippet
-    }));
+    // Since we're using OpenAI's knowledge directly, we don't have external sources
+    const sources = [];
 
     const response = {
       summary,
