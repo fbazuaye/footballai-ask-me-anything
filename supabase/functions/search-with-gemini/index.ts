@@ -13,9 +13,12 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Function invoked with method:', req.method);
     const { query } = await req.json();
+    console.log('Query received:', query);
     
     if (!query || query.trim() === '') {
+      console.log('Empty query provided');
       return new Response(
         JSON.stringify({ error: 'Query is required' }), 
         { 
@@ -38,6 +41,7 @@ serve(async (req) => {
       );
     }
 
+    console.log('Starting Gemini data fetch...');
     // Use Gemini to search and fetch football data
     const dataGeminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`,
@@ -108,12 +112,17 @@ Do NOT ask for additional search results. Use your existing football knowledge t
     // Parse Gemini response to extract football data
     let footballData;
     try {
+      console.log('Gemini response received, parsing...');
       const geminiText = dataGeminiData.candidates[0].content.parts[0].text;
+      console.log('Raw Gemini text:', geminiText.substring(0, 200) + '...');
       // Remove markdown code blocks if present
       const cleanedText = geminiText.replace(/```json\n?|\n?```/g, '').trim();
+      console.log('Cleaned text for parsing:', cleanedText.substring(0, 200) + '...');
       footballData = JSON.parse(cleanedText);
+      console.log('Successfully parsed football data:', footballData);
     } catch (parseError) {
       console.error('Error parsing Gemini response:', parseError);
+      console.error('Raw response text:', dataGeminiData.candidates[0].content.parts[0].text);
       return new Response(
         JSON.stringify({ error: 'Failed to parse football data' }), 
         { 
