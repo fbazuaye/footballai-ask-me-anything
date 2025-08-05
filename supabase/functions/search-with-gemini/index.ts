@@ -25,10 +25,10 @@ serve(async (req) => {
       );
     }
 
-    const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+    const cohereApiKey = 'sWuFS6CzXK3kZ34zw0brMEsFrBRNIBb6srKMI7zw';
     
-    if (!geminiApiKey) {
-      console.error('GOOGLE_GEMINI_API_KEY not found in environment variables');
+    if (!cohereApiKey) {
+      console.error('COHERE_API_KEY not found in environment variables');
       return new Response(
         JSON.stringify({ error: 'API key not configured' }), 
         { 
@@ -38,18 +38,18 @@ serve(async (req) => {
       );
     }
 
-    // Call Google Gemini API
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+    // Call Cohere API
+    const cohereResponse = await fetch(
+      'https://api.cohere.ai/v1/generate',
       {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${cohereApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are a factual football information assistant. For the query: "${query}"
+          model: 'command',
+          prompt: `You are a factual football information assistant. For the query: "${query}"
 
 IMPORTANT INSTRUCTIONS:
 - Only provide factually accurate information that you are confident about
@@ -59,22 +59,20 @@ IMPORTANT INSTRUCTIONS:
 - Focus on verifiable facts rather than opinions
 - If the information might be outdated, mention this
 
-Please provide a factual response based on your knowledge.`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            topK: 20,
-            topP: 0.8,
-            maxOutputTokens: 800,
-          }
+Please provide a factual response based on your knowledge.`,
+          max_tokens: 800,
+          temperature: 0.1,
+          k: 20,
+          p: 0.8,
+          stop_sequences: [],
+          return_likelihoods: 'NONE'
         })
       }
     );
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error('Gemini API error:', errorText);
+    if (!cohereResponse.ok) {
+      const errorText = await cohereResponse.text();
+      console.error('Cohere API error:', errorText);
       return new Response(
         JSON.stringify({ error: 'Failed to get response from AI' }), 
         { 
@@ -84,9 +82,9 @@ Please provide a factual response based on your knowledge.`
       );
     }
 
-    const geminiData = await geminiResponse.json();
+    const cohereData = await cohereResponse.json();
     
-    if (!geminiData.candidates || geminiData.candidates.length === 0) {
+    if (!cohereData.generations || cohereData.generations.length === 0) {
       return new Response(
         JSON.stringify({ error: 'No response generated' }), 
         { 
@@ -96,7 +94,7 @@ Please provide a factual response based on your knowledge.`
       );
     }
 
-    const summary = geminiData.candidates[0].content.parts[0].text;
+    const summary = cohereData.generations[0].text;
 
     // Create mock sources for now (you can enhance this later)
     const sources = [
