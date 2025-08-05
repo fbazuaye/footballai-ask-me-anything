@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 220 15% 97%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -17,8 +17,8 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -26,17 +26,34 @@ All colors MUST be HSL.
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --input: 0 0% 100%;
+    --ring: 217 91% 60%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
+
+    /* Custom gradient variables */
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(200 85% 55%) 50%, hsl(35 100% 65%) 100%);
+    --gradient-search: linear-gradient(135deg, hsl(217 91% 60%), hsl(200 85% 55%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.05));
+    
+    /* Sphere colors */
+    --sphere-blue: 217 91% 60%;
+    --sphere-orange: 35 100% 65%;
+    --sphere-red: 0 84% 60%;
+    --sphere-yellow: 48 100% 67%;
+    --sphere-purple: 250 84% 60%;
+
+    /* Animation variables */
+    --animation-float: float 6s ease-in-out infinite;
+    --animation-float-delay: float 6s ease-in-out infinite 2s;
+    --animation-float-delay-2: float 6s ease-in-out infinite 4s;
 
     --sidebar-background: 0 0% 98%;
 
@@ -101,5 +118,62 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  50% {
+    transform: translateY(-10px) translateX(-5px);
+  }
+  75% {
+    transform: translateY(-15px) translateX(5px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.6);
+  }
+}
+
+/* Utility classes for design system */
+@layer utilities {
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .gradient-search {
+    background: var(--gradient-search);
+  }
+  
+  .gradient-card {
+    background: var(--gradient-card);
+    backdrop-filter: blur(10px);
+  }
+  
+  .animate-float {
+    animation: var(--animation-float);
+  }
+  
+  .animate-float-delay {
+    animation: var(--animation-float-delay);
+  }
+  
+  .animate-float-delay-2 {
+    animation: var(--animation-float-delay-2);
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
   }
 }
