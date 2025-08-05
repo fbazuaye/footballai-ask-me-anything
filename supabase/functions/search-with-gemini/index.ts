@@ -29,6 +29,7 @@ serve(async (req) => {
     }
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    console.log('Gemini API Key available:', !!geminiApiKey);
     
     if (!geminiApiKey) {
       console.error('GEMINI_API_KEY not found in environment variables');
