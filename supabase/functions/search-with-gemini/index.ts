@@ -28,15 +28,15 @@ serve(async (req) => {
       );
     }
 
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     const cohereApiKey = Deno.env.get('COHERE_API_KEY');
-    console.log('Gemini API Key available:', !!geminiApiKey);
+    console.log('OpenAI API Key available:', !!openaiApiKey);
     console.log('Cohere API Key available:', !!cohereApiKey);
     
-    if (!geminiApiKey) {
-      console.error('GEMINI_API_KEY not found in environment variables');
+    if (!openaiApiKey) {
+      console.error('OPENAI_API_KEY not found in environment variables');
       return new Response(
-        JSON.stringify({ error: 'Gemini API key not configured' }), 
+        JSON.stringify({ error: 'OpenAI API key not configured' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -87,27 +87,34 @@ serve(async (req) => {
     const cohereData = await cohereResponse.json();
     console.log('Cohere data received, results count:', cohereData.search_results?.length || 0);
     
-    // Extract search results for Gemini processing
+    // Extract search results for OpenAI processing
     const searchResults = cohereData.search_results?.map((result: any) => ({
       title: result.title,
       snippet: result.snippet,
       link: result.url
     })) || [];
 
-    console.log('Starting Gemini processing...');
+    console.log('Starting OpenAI processing...');
     
-    // Use Gemini to process the real-time search results
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`,
+    // Use OpenAI to process the real-time search results
+    const openaiResponse = await fetch(
+      'https://api.openai.com/v1/chat/completions',
       {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are a football expert. The user asked: "${query}"
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a football expert. Provide comprehensive and intelligent analysis based on search results.'
+            },
+            {
+              role: 'user',
+              content: `The user asked: "${query}"
 
 Based on these real-time search results:
 ${searchResults.map(result => `Title: ${result.title}\nSnippet: ${result.snippet}`).join('\n\n')}
@@ -119,25 +126,21 @@ Please provide a comprehensive and intelligent analysis that:
 - Includes relevant details about matches, teams, players, or statistics
 
 Format your response as a clear, informative summary.`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.2,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1000,
-          }
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 1000
         })
       }
     );
 
-    console.log('Gemini response status:', geminiResponse.status);
+    console.log('OpenAI response status:', openaiResponse.status);
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error('Gemini API error:', errorText);
+    if (!openaiResponse.ok) {
+      const errorText = await openaiResponse.text();
+      console.error('OpenAI API error:', errorText);
       return new Response(
-        JSON.stringify({ error: 'Failed to get response from Gemini' }), 
+        JSON.stringify({ error: 'Failed to get response from OpenAI' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -145,11 +148,11 @@ Format your response as a clear, informative summary.`
       );
     }
 
-    const geminiData = await geminiResponse.json();
-    console.log('Gemini data received:', !!geminiData.candidates);
+    const openaiData = await openaiResponse.json();
+    console.log('OpenAI data received:', !!openaiData.choices);
     
-    if (!geminiData.candidates || geminiData.candidates.length === 0) {
-      console.error('No response from Gemini');
+    if (!openaiData.choices || openaiData.choices.length === 0) {
+      console.error('No response from OpenAI');
       return new Response(
         JSON.stringify({ error: 'No response from AI' }), 
         { 
@@ -159,7 +162,7 @@ Format your response as a clear, informative summary.`
       );
     }
 
-    const summary = geminiData.candidates[0].content.parts[0].text;
+    const summary = openaiData.choices[0].message.content;
     console.log('Summary generated, length:', summary?.length);
 
     // Use the actual search results as sources
