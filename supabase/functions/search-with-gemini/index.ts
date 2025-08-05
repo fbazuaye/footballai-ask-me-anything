@@ -49,14 +49,24 @@ serve(async (req) => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Please provide a comprehensive answer for this football-related query: "${query}". Include relevant information, statistics, and context. Format your response as if you're an expert football analyst.`
+              text: `You are a factual football information assistant. For the query: "${query}"
+
+IMPORTANT INSTRUCTIONS:
+- Only provide factually accurate information that you are confident about
+- If you don't have current or accurate information, clearly state "I don't have current information about this"
+- Avoid speculation or assumptions
+- Be specific with dates, numbers, and sources when possible
+- Focus on verifiable facts rather than opinions
+- If the information might be outdated, mention this
+
+Please provide a factual response based on your knowledge.`
             }]
           }],
           generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
+            temperature: 0.1,
+            topK: 20,
+            topP: 0.8,
+            maxOutputTokens: 800,
           }
         })
       }
