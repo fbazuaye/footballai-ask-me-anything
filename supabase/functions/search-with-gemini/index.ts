@@ -49,27 +49,26 @@ serve(async (req) => {
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You are a football data expert. The user asked: "${query}"
+              text: `You are a football database with comprehensive knowledge of football matches, teams, players, and statistics. The user asked: "${query}"
 
-Please provide detailed football information for this query. Return the information in this exact JSON format:
+Using your internal knowledge of football, provide detailed and accurate information for this query. Format your response as JSON with this structure:
 {
   "matches": [
     {
-      "title": "Match title or event",
-      "snippet": "Key details like date, score, teams, etc.",
-      "details": "Additional relevant information"
+      "title": "Match description (e.g., Chelsea vs Arsenal - Premier League)",
+      "snippet": "Key details: Date, Score, Venue, Competition",
+      "details": "Additional context like goalscorers, cards, etc."
     }
   ]
 }
 
-For specific queries like "Chelsea's home match results from 2022/2023", provide actual historical data with:
-- Match dates
-- Opponents
-- Scores
-- Competition (Premier League, Champions League, etc.)
-- Key details
+For queries about specific matches like "Chelsea's EPL results 2023-2024":
+- Provide actual historical match data from your knowledge
+- Include dates, opponents, scores, venues
+- Specify the competition (Premier League, Champions League, etc.)
+- Add relevant match details
 
-Be comprehensive and accurate. Return only the JSON response.`
+Do NOT ask for additional search results. Use your existing football knowledge to provide comprehensive, accurate data. Return ONLY the JSON response with the requested information.`
             }]
           }],
           generationConfig: {
