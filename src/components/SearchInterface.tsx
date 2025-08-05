@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Search, Mic, Sparkles, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import FloatingElements from "./FloatingElements";
 import SearchResults from "./SearchResults";
 
@@ -46,30 +47,24 @@ const SearchInterface = () => {
     setIsLoading(true);
     
     try {
-      // TODO: Replace with actual Gemini API integration
-      // Simulated API call for now
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockResponse: SearchResponse = {
-        summary: `Here's what I found about "${searchQuery}": This is a comprehensive analysis based on the latest information available. The search reveals key insights and relevant details that match your query.`,
-        sources: [
-          {
-            title: "ESPN Football News",
-            url: "https://espn.com",
-            snippet: "Latest updates and comprehensive coverage of football matches, transfers, and league standings."
-          },
-          {
-            title: "BBC Sport",
-            url: "https://bbc.com/sport",
-            snippet: "Breaking news, match reports, and in-depth analysis of football events worldwide."
-          }
-        ]
+      const { data, error } = await supabase.functions.invoke('search-with-gemini', {
+        body: { query: searchQuery }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Search failed');
+      }
+
+      const response: SearchResponse = {
+        summary: data.summary,
+        sources: data.sources || []
       };
 
-      setResults(mockResponse);
+      setResults(response);
       setSearchHistory(prev => [searchQuery, ...prev.slice(0, 9)]);
       
     } catch (error) {
+      console.error('Search error:', error);
       toast({
         title: "Search Failed",
         description: "Unable to process your search. Please try again.",
