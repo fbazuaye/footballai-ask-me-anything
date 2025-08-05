@@ -25,10 +25,10 @@ serve(async (req) => {
       );
     }
 
-    const cohereApiKey = 'sWuFS6CzXK3kZ34zw0brMEsFrBRNIBb6srKMI7zw';
+    const serpApiKey = '78a620ad07c5a759a8db0059b93127f52e6802f8f8d14e34d179e6dee6bb1f04';
     
-    if (!cohereApiKey) {
-      console.error('COHERE_API_KEY not found in environment variables');
+    if (!serpApiKey) {
+      console.error('SERP_API_KEY not found in environment variables');
       return new Response(
         JSON.stringify({ error: 'API key not configured' }), 
         { 
@@ -38,43 +38,22 @@ serve(async (req) => {
       );
     }
 
-    // Call Cohere API
-    const cohereResponse = await fetch(
-      'https://api.cohere.ai/v1/generate',
+    // Call SerpAPI for Google search results
+    const serpResponse = await fetch(
+      `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query + ' football')}&api_key=${serpApiKey}&num=10`,
       {
-        method: 'POST',
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${cohereApiKey}`,
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'command',
-          prompt: `You are a factual football information assistant. For the query: "${query}"
-
-IMPORTANT INSTRUCTIONS:
-- Only provide factually accurate information that you are confident about
-- If you don't have current or accurate information, clearly state "I don't have current information about this"
-- Avoid speculation or assumptions
-- Be specific with dates, numbers, and sources when possible
-- Focus on verifiable facts rather than opinions
-- If the information might be outdated, mention this
-
-Please provide a factual response based on your knowledge.`,
-          max_tokens: 800,
-          temperature: 0.1,
-          k: 20,
-          p: 0.8,
-          stop_sequences: [],
-          return_likelihoods: 'NONE'
-        })
+        }
       }
     );
 
-    if (!cohereResponse.ok) {
-      const errorText = await cohereResponse.text();
-      console.error('Cohere API error:', errorText);
+    if (!serpResponse.ok) {
+      const errorText = await serpResponse.text();
+      console.error('SerpAPI error:', errorText);
       return new Response(
-        JSON.stringify({ error: 'Failed to get response from AI' }), 
+        JSON.stringify({ error: 'Failed to get search results' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -82,11 +61,11 @@ Please provide a factual response based on your knowledge.`,
       );
     }
 
-    const cohereData = await cohereResponse.json();
+    const serpData = await serpResponse.json();
     
-    if (!cohereData.generations || cohereData.generations.length === 0) {
+    if (!serpData.organic_results || serpData.organic_results.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'No response generated' }), 
+        JSON.stringify({ error: 'No search results found' }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -94,26 +73,19 @@ Please provide a factual response based on your knowledge.`,
       );
     }
 
-    const summary = cohereData.generations[0].text;
+    // Extract and format the search results
+    const sources = serpData.organic_results.slice(0, 5).map((result: any) => ({
+      title: result.title || 'No title',
+      url: result.link || '#',
+      snippet: result.snippet || 'No description available'
+    }));
 
-    // Create mock sources for now (you can enhance this later)
-    const sources = [
-      {
-        title: "ESPN Football News",
-        url: "https://espn.com",
-        snippet: "Latest updates and comprehensive coverage of football matches, transfers, and league standings."
-      },
-      {
-        title: "BBC Sport",
-        url: "https://bbc.com/sport",
-        snippet: "Breaking news, match reports, and in-depth analysis of football events worldwide."
-      },
-      {
-        title: "Sky Sports",
-        url: "https://skysports.com",
-        snippet: "In-depth football coverage including live scores, fixtures, and expert analysis."
-      }
-    ];
+    // Create a summary from the search results
+    const summary = `Here are the latest search results for "${query}":\n\n` + 
+      sources.map((source, index) => 
+        `${index + 1}. ${source.title}\n${source.snippet}`
+      ).join('\n\n');
+
 
     const response = {
       summary,
