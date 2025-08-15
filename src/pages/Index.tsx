@@ -1,7 +1,13 @@
+
 import SearchInterface from "@/components/SearchInterface";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const Index = () => {
-  return <SearchInterface />;
+  return (
+    <ProtectedRoute>
+      <SearchInterface />
+    </ProtectedRoute>
+  );
 };
 
 export default Index;

@@ -1,10 +1,12 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Mic, Sparkles, TrendingUp } from "lucide-react";
+import { Loader2, Search, Mic, Sparkles, TrendingUp, LogOut, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import FloatingElements from "./FloatingElements";
 import SearchResults from "./SearchResults";
@@ -24,6 +26,7 @@ const SearchInterface = () => {
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
 
   const quickSearches = [
     "Latest football news",
@@ -80,6 +83,22 @@ const SearchInterface = () => {
     handleSearch(searchTerm);
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error signing out",
+        description: "There was an error signing out. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden gradient-hero">
       <FloatingElements />
@@ -97,12 +116,33 @@ const SearchInterface = () => {
           <Button variant="ghost" className="text-white hover:bg-white/10 p-2 md:p-3">
             🌙
           </Button>
-          <Button variant="ghost" className="text-white hover:bg-white/10 text-xs md:text-sm px-2 md:px-4">
-            Sign In
-          </Button>
-          <Button className="bg-white text-primary hover:bg-white/90 text-xs md:text-sm px-2 md:px-4">
-            Sign Up
-          </Button>
+          {user ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full">
+                <User className="w-4 h-4 text-white" />
+                <span className="text-white text-sm hidden sm:inline">
+                  {user.email?.split('@')[0]}
+                </span>
+              </div>
+              <Button 
+                variant="ghost" 
+                onClick={handleSignOut}
+                className="text-white hover:bg-white/10 text-xs md:text-sm px-2 md:px-4"
+              >
+                <LogOut className="w-4 h-4 mr-1" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Button variant="ghost" className="text-white hover:bg-white/10 text-xs md:text-sm px-2 md:px-4">
+                Sign In
+              </Button>
+              <Button className="bg-white text-primary hover:bg-white/90 text-xs md:text-sm px-2 md:px-4">
+                Sign Up
+              </Button>
+            </>
+          )}
         </div>
       </header>
 
