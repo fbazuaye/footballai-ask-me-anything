@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Home } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import FloatingElements from "@/components/FloatingElements";
@@ -116,6 +117,16 @@ const Auth = () => {
       <FloatingElements />
       
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back to Home Button */}
+        <div className="absolute top-4 left-4">
+          <Button asChild variant="ghost" className="text-white hover:bg-white/10 px-3 py-2">
+            <Link to="/" className="flex items-center gap-1">
+              <Home className="w-4 h-4" />
+              <span className="text-sm">Home</span>
+            </Link>
+          </Button>
+        </div>
+        
         <div className="flex flex-col items-center justify-center min-h-screen">
           {/* Header */}
           <div className="mb-8 text-center">

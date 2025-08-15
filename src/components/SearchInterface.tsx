@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Mic, Sparkles, TrendingUp, LogOut, User } from "lucide-react";
+import { Loader2, Search, Mic, Sparkles, TrendingUp, LogOut, User, Home } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,6 +114,12 @@ const SearchInterface = () => {
         </div>
         
         <div className="flex items-center gap-2 md:gap-4">
+          <Button asChild variant="ghost" className="text-white hover:bg-white/10 px-2 md:px-3 py-2">
+            <Link to="/" className="flex items-center gap-1">
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs md:text-sm">Home</span>
+            </Link>
+          </Button>
           <Button variant="ghost" className="text-white hover:bg-white/10 p-2 md:p-3">
             🌙
           </Button>
