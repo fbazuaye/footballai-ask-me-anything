@@ -17,6 +17,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -84,7 +85,10 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: redirectUrl
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: name
+          }
         }
       });
 
@@ -101,6 +105,7 @@ const Auth = () => {
       setEmail("");
       setPassword("");
       setConfirmPassword("");
+      setName("");
     } catch (error: any) {
       if (error.message.includes("already registered")) {
         setError("An account with this email already exists. Please sign in instead.");
@@ -200,6 +205,16 @@ const Auth = () => {
 
                 <TabsContent value="signup">
                   <form onSubmit={handleSignUp} className="space-y-4">
+                    <div>
+                      <Input
+                        type="text"
+                        placeholder="Full Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        className="bg-white/95 border-white/20"
+                      />
+                    </div>
                     <div>
                       <Input
                         type="email"
