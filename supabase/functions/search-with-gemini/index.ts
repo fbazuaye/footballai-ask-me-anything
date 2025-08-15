@@ -98,12 +98,12 @@ serve(async (req) => {
     if (userId) {
       try {
         const { error: insertError } = await supabase
-          .from('search_history')
+          .from('football_search_history')
           .insert({
             user_id: userId,
-            query: query,
-            answer: summary,
-            citations: sources
+            question: query,
+            response: summary,
+            sources: sources
           });
         
         if (insertError) {
