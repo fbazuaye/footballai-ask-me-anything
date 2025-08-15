@@ -115,6 +115,33 @@ export type Database = {
         }
         Relationships: []
       }
+      football_search_history: {
+        Row: {
+          created_at: string
+          id: string
+          question: string
+          response: string
+          sources: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question: string
+          response: string
+          sources?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question?: string
+          response?: string
+          sources?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       generated_images: {
         Row: {
           aspect_ratio: string
