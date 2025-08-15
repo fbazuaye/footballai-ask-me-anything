@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +17,22 @@ serve(async (req) => {
     console.log('Function invoked with method:', req.method);
     const { query } = await req.json();
     console.log('Query received:', query);
+    
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false }
+    });
+
+    // Get user from request headers
+    const authHeader = req.headers.get('Authorization');
+    let userId = null;
+    
+    if (authHeader) {
+      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+      userId = user?.id;
+    }
     
     if (!query || query.trim() === '') {
       console.log('Empty query provided');
@@ -76,6 +93,29 @@ serve(async (req) => {
       sources,
       query
     };
+
+    // Save search history to database if user is authenticated
+    if (userId) {
+      try {
+        const { error: insertError } = await supabase
+          .from('search_history')
+          .insert({
+            user_id: userId,
+            query: query,
+            answer: summary,
+            citations: sources
+          });
+        
+        if (insertError) {
+          console.error('Error saving search history:', insertError);
+        } else {
+          console.log('Search history saved successfully');
+        }
+      } catch (historyError) {
+        console.error('Failed to save search history:', historyError);
+        // Don't fail the request if history saving fails
+      }
+    }
 
     console.log('RAG search completed successfully for query:', query);
 
