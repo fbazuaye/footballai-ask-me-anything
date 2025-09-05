@@ -94,7 +94,36 @@ serve(async (req) => {
       query
     };
 
-    // Save search history to database if user is authenticated
+    // Generate session ID for anonymous users
+    const sessionId = userId ? null : crypto.randomUUID();
+    const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip');
+    const userAgent = req.headers.get('user-agent');
+
+    // Save search history to public database (for all users)
+    try {
+      const { error: publicInsertError } = await supabase
+        .from('public_search_history')
+        .insert({
+          user_id: userId,
+          session_id: sessionId,
+          query: query,
+          response: summary,
+          sources: sources,
+          ip_address: ipAddress,
+          user_agent: userAgent
+        });
+      
+      if (publicInsertError) {
+        console.error('Error saving public search history:', publicInsertError);
+      } else {
+        console.log('Public search history saved successfully');
+      }
+    } catch (publicHistoryError) {
+      console.error('Failed to save public search history:', publicHistoryError);
+      // Don't fail the request if history saving fails
+    }
+
+    // Also save to user-specific history if authenticated
     if (userId) {
       try {
         const { error: insertError } = await supabase
@@ -107,12 +136,12 @@ serve(async (req) => {
           });
         
         if (insertError) {
-          console.error('Error saving search history:', insertError);
+          console.error('Error saving user search history:', insertError);
         } else {
-          console.log('Search history saved successfully');
+          console.log('User search history saved successfully');
         }
       } catch (historyError) {
-        console.error('Failed to save search history:', historyError);
+        console.error('Failed to save user search history:', historyError);
         // Don't fail the request if history saving fails
       }
     }

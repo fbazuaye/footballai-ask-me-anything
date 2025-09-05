@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_logs: {
+        Row: {
+          access_granted: boolean
+          access_method: string
+          card_id: string
+          driver_id: string | null
+          error_message: string | null
+          id: string
+          timestamp: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          access_granted: boolean
+          access_method: string
+          card_id: string
+          driver_id?: string | null
+          error_message?: string | null
+          id?: string
+          timestamp?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          access_granted?: boolean
+          access_method?: string
+          card_id?: string
+          driver_id?: string | null
+          error_message?: string | null
+          id?: string
+          timestamp?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_logs_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           api_key: string
@@ -91,27 +139,180 @@ export type Database = {
           },
         ]
       }
+      assets: {
+        Row: {
+          asset_id: string
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          company: string | null
+          connection_strength: string | null
+          created_at: string
+          email: string | null
+          id: string
+          last_contact_date: string | null
+          linkedin_url: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          position: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          connection_strength?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_contact_date?: string | null
+          linkedin_url?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company?: string | null
+          connection_strength?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_contact_date?: string | null
+          linkedin_url?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cover_letters: {
+        Row: {
+          company_name: string
+          content: string
+          created_at: string
+          id: string
+          job_description: string | null
+          position_title: string
+          status: string | null
+          title: string
+          tone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_name: string
+          content: string
+          created_at?: string
+          id?: string
+          job_description?: string | null
+          position_title: string
+          status?: string | null
+          title: string
+          tone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_name?: string
+          content?: string
+          created_at?: string
+          id?: string
+          job_description?: string | null
+          position_title?: string
+          status?: string | null
+          title?: string
+          tone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           embedding: string | null
           id: string
           metadata: Json | null
           pageContent: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           embedding?: string | null
           id?: string
           metadata?: Json | null
           pageContent?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           embedding?: string | null
           id?: string
           metadata?: Json | null
           pageContent?: string | null
-          user_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      drivers: {
+        Row: {
+          created_at: string | null
+          email: string
+          employee_id: string
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          employee_id: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          employee_id?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -177,34 +378,322 @@ export type Database = {
       }
       google_credentials: {
         Row: {
-          access_token: string
+          access_token_encrypted: string | null
           expires_at: string
           id: number
-          refresh_token: string | null
+          refresh_token_encrypted: string | null
           scope: string | null
           token_type: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
-          access_token: string
+          access_token_encrypted?: string | null
           expires_at: string
           id: number
-          refresh_token?: string | null
+          refresh_token_encrypted?: string | null
           scope?: string | null
           token_type?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
-          access_token?: string
+          access_token_encrypted?: string | null
           expires_at?: string
           id?: number
-          refresh_token?: string | null
+          refresh_token_encrypted?: string | null
           scope?: string | null
           token_type?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      job_applications: {
+        Row: {
+          application_date: string | null
+          company_name: string
+          created_at: string
+          id: string
+          job_url: string | null
+          location: string | null
+          notes: string | null
+          position_title: string
+          salary_range: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          application_date?: string | null
+          company_name: string
+          created_at?: string
+          id?: string
+          job_url?: string | null
+          location?: string | null
+          notes?: string | null
+          position_title: string
+          salary_range?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          application_date?: string | null
+          company_name?: string
+          created_at?: string
+          id?: string
+          job_url?: string | null
+          location?: string | null
+          notes?: string | null
+          position_title?: string
+          salary_range?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      motivational_content: {
+        Row: {
+          category: string | null
+          content: string
+          content_type: string
+          created_at: string
+          id: string
+          is_favorite: boolean | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          content_type: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      networking_contacts: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string | null
+          id: string
+          last_contact_date: string | null
+          linkedin_url: string | null
+          name: string
+          notes: string | null
+          relationship_type: string | null
+          tags: string[] | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_contact_date?: string | null
+          linkedin_url?: string | null
+          name: string
+          notes?: string | null
+          relationship_type?: string | null
+          tags?: string[] | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_contact_date?: string | null
+          linkedin_url?: string | null
+          name?: string
+          notes?: string | null
+          relationship_type?: string | null
+          tags?: string[] | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nfc_cards: {
+        Row: {
+          card_id: string
+          created_at: string | null
+          driver_id: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          is_revoked: boolean | null
+          master_key_version: number
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          card_id: string
+          created_at?: string | null
+          driver_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_revoked?: boolean | null
+          master_key_version?: number
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          card_id?: string
+          created_at?: string | null
+          driver_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_revoked?: boolean | null
+          master_key_version?: number
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfc_cards_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfc_cards_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfc_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          data: Json | null
+          id: string
+          tag_uid: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          data?: Json | null
+          id?: string
+          tag_uid?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          data?: Json | null
+          id?: string
+          tag_uid?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nfc_metadata: {
+        Row: {
+          created_at: string
+          driver_id: string | null
+          encrypted_payload: string
+          expiry_date: string | null
+          id: string
+          is_active: boolean
+          last_scanned_at: string | null
+          scan_count: number
+          tag_uid: string
+          updated_at: string
+          user_id: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          driver_id?: string | null
+          encrypted_payload: string
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          last_scanned_at?: string | null
+          scan_count?: number
+          tag_uid: string
+          updated_at?: string
+          user_id: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string | null
+          encrypted_payload?: string
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          last_scanned_at?: string | null
+          scan_count?: number
+          tag_uid?: string
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string | null
+        }
+        Relationships: []
+      }
+      nfc_operations: {
+        Row: {
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          operation_type: string
+          success: boolean
+          tag_uid: string | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          operation_type: string
+          success?: boolean
+          tag_uid?: string | null
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          operation_type?: string
+          success?: boolean
+          tag_uid?: string | null
+          timestamp?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -214,6 +703,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          role: string
           updated_at: string
         }
         Insert: {
@@ -221,6 +711,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          role?: string
           updated_at?: string
         }
         Update: {
@@ -228,7 +719,157 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          role?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      public_search_history: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          query: string
+          response: string
+          session_id: string | null
+          sources: Json | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          query: string
+          response: string
+          session_id?: string | null
+          sources?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          query?: string
+          response?: string
+          session_id?: string | null
+          sources?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      scan_documents: {
+        Row: {
+          ai_summary: string | null
+          ai_tags: string[] | null
+          category: string | null
+          created_at: string
+          extracted_text: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          is_sensitive: boolean | null
+          metadata: Json | null
+          scan_id: string
+          updated_at: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          ai_tags?: string[] | null
+          category?: string | null
+          created_at?: string
+          extracted_text?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          scan_id: string
+          updated_at?: string
+        }
+        Update: {
+          ai_summary?: string | null
+          ai_tags?: string[] | null
+          category?: string | null
+          created_at?: string
+          extracted_text?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          scan_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_documents_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scans: {
+        Row: {
+          ai_summary: string | null
+          ai_tags: string[] | null
+          category: string | null
+          content_type: string
+          created_at: string
+          description: string | null
+          extracted_text: string | null
+          file_path: string
+          file_size: number | null
+          id: string
+          is_sensitive: boolean | null
+          metadata: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          ai_tags?: string[] | null
+          category?: string | null
+          content_type: string
+          created_at?: string
+          description?: string | null
+          extracted_text?: string | null
+          file_path: string
+          file_size?: number | null
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          ai_tags?: string[] | null
+          category?: string | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          extracted_text?: string | null
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          is_sensitive?: boolean | null
+          metadata?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -255,6 +896,75 @@ export type Database = {
           created_at?: string
           id?: string
           query?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      skills: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          proficiency_level: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          proficiency_level?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          proficiency_level?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      skills_assessments: {
+        Row: {
+          assessment_type: string | null
+          certification_url: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          proficiency_level: number | null
+          skill_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessment_type?: string | null
+          certification_url?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          proficiency_level?: number | null
+          skill_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assessment_type?: string | null
+          certification_url?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          proficiency_level?: number | null
+          skill_name?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -309,6 +1019,72 @@ export type Database = {
           staging_materials?: string[] | null
           style?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tags: {
+        Row: {
+          asset_id: string | null
+          container_id: string | null
+          created_at: string
+          id: string
+          last_scanned: string | null
+          shipment_id: string | null
+          tag_uid: string
+          updated_at: string
+          user_id: string
+          written_data: Json
+        }
+        Insert: {
+          asset_id?: string | null
+          container_id?: string | null
+          created_at?: string
+          id?: string
+          last_scanned?: string | null
+          shipment_id?: string | null
+          tag_uid: string
+          updated_at?: string
+          user_id: string
+          written_data: Json
+        }
+        Update: {
+          asset_id?: string | null
+          container_id?: string | null
+          created_at?: string
+          id?: string
+          last_scanned?: string | null
+          shipment_id?: string | null
+          tag_uid?: string
+          updated_at?: string
+          user_id?: string
+          written_data?: Json
+        }
+        Relationships: []
+      }
+      token_access_logs: {
+        Row: {
+          action: string
+          id: string
+          ip_address: unknown | null
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          id?: string
+          ip_address?: unknown | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          id?: string
+          ip_address?: unknown | null
+          timestamp?: string | null
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
@@ -373,6 +1149,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicles: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          license_plate: string
+          model: string
+          name: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          license_plate: string
+          model?: string
+          name: string
+          updated_at?: string | null
+          year?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          license_plate?: string
+          model?: string
+          name?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -381,6 +1190,34 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      check_google_token_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          expires_at: string
+          has_access_token: boolean
+          has_refresh_token: boolean
+          id: number
+          scope: string
+          token_type: string
+          updated_at: string
+        }[]
+      }
+      decrypt_token: {
+        Args: { encrypted_token: string }
+        Returns: string
+      }
+      encrypt_token: {
+        Args: { token_value: string }
+        Returns: string
+      }
+      get_user_google_tokens: {
+        Args: { target_user_id: string }
+        Returns: {
+          access_token: string
+          expires_at: string
+          refresh_token: string
+        }[]
       }
       halfvec_avg: {
         Args: { "": number[] }
@@ -414,6 +1251,16 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      insert_google_credentials: {
+        Args: {
+          p_access_token: string
+          p_expires_at?: string
+          p_refresh_token?: string
+          p_scope?: string
+          p_token_type?: string
+        }
+        Returns: string
+      }
       ivfflat_bit_support: {
         Args: { "": unknown }
         Returns: unknown
@@ -434,6 +1281,10 @@ export type Database = {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: unknown
       }
+      log_token_access: {
+        Args: { action_type: string }
+        Returns: undefined
+      }
       sparsevec_out: {
         Args: { "": unknown }
         Returns: unknown
@@ -445,6 +1296,15 @@ export type Database = {
       sparsevec_typmod_in: {
         Args: { "": unknown[] }
         Returns: number
+      }
+      update_google_credentials: {
+        Args: {
+          p_access_token?: string
+          p_credential_id: number
+          p_expires_at?: string
+          p_refresh_token?: string
+        }
+        Returns: boolean
       }
       validate_api_key: {
         Args: { api_key_value: string }
